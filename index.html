@@ -1,49 +1,336 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>2026-boyfriend-tracker</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026男朋友情緒記錄表</title>
 <style>
 :root {
-  --bg-color: #C1C2AD; /* 薄荷綠 Sage */
-  --card-bg: #FFFFFF;
-  --rose: #FFDAF5;    /* 櫻花粉 */
-  --amber: #EFD593;   /* 奶油黃 */
-  --mauve: #B7A1A6;   /* 薰衣草紫 */
-  --blue: #BCD6EF;    /* 寶寶藍 */
-  --text: #5A5A5A;
+--bg-blue: #B0E1FF;  /* 淺藍色背景 /
+--white: #FFFFFF;    / 白色文字與卡片 /
+--light-purple: #D3C7E6; / 開心數據：淺紫色 /
+--light-pink: #FFDAF5;   / 生氣數據：淺粉紅色 /
+--text-dark: #6B8BA4;    / 輔助深色文字 */
 }
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--bg-color);
-  color: var(--text);
-  margin: 0;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+font-family: "Quicksand", "Comic Sans MS", "Noto Sans TC", sans-serif; /* 可愛圓潤字體 */
+background-color: var(--bg-blue);
+color: var(--white);
+margin: 0;
+padding: 20px;
+display: flex;
+flex-direction: column;
+align-items: center;
 }
 h1 {
-  color: white;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-  font-size: 1.8rem;
-  margin-bottom: 20px;
+font-size: 1.8rem;
+margin-bottom: 20px;
+text-shadow: 1px 1px 5px rgba(0,0,0,0.1);
 }
 /* 統計儀表板 */
 .dashboard {
-  background: var(--card-bg);
-  padding: 15px 30px;
-  border-radius: 25px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  display: flex;
-  gap: 40px;
-  margin-bottom: 30px;
-  text-align: center;
+background: rgba(255, 255, 255, 0.2);
+padding: 20px 40px;
+border-radius: 30px;
+border: 2px solid var(--white);
+display: flex;
+gap: 50px;
+margin-bottom: 30px;
+text-align: center;
 }
-.stat-item span { display: block; font-size: 0.9rem; color: #888; }
-.stat-item b { font-size: 1.5rem; }
-.happy-text { color: #f28ab2; }
-.angry-text { color: #88aadd; }
-
-/* 日
+.stat-item span {
+display: block;
+font-size: 0.95rem;
+font-weight: bold;
+margin-bottom: 5px;
+}
+.stat-item b {
+font-size: 2rem;
+text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+.happy-num { color: var(--light-purple); }
+.angry-num { color: var(--light-pink); }
+/* 日曆區塊 */
+.calendar-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+gap: 25px;
+width: 100%;
+max-width: 1100px;
+}
+.month-box {
+background: rgba(255, 255, 255, 0.15);
+padding: 15px;
+border-radius: 25px;
+border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.month-title {
+text-align: center;
+font-weight: bold;
+margin-bottom: 10px;
+font-size: 1.1rem;
+}
+.days-grid {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+gap: 6px;
+text-align: center;
+}
+.weekday {
+font-size: 0.75rem;
+opacity: 0.8;
+padding-bottom: 5px;
+}
+.day-cell {
+aspect-ratio: 1;
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 12px;
+cursor: pointer;
+font-size: 0.85rem;
+transition: transform 0.2s, background 0.2s;
+background: rgba(255, 255, 255, 0.1);
+}
+.day-cell:hover {
+background: var(--white);
+color: var(--bg-blue);
+transform: scale(1.1);
+}
+.day-cell.today {
+border: 2px solid var(--white);
+font-weight: bold;
+}
+.day-cell.mood-happy { background-color: var(--light-purple); color: white; }
+.day-cell.mood-angry { background-color: var(--light-pink); color: white; }
+/* 紀錄視窗 */
+.modal {
+display: none;
+position: fixed;
+top: 0; left: 0;
+width: 100%; height: 100%;
+background: rgba(107, 139, 164, 0.6);
+backdrop-filter: blur(5px);
+justify-content: center;
+align-items: center;
+z-index: 1000;
+}
+.modal-content {
+background: var(--white);
+color: var(--text-dark);
+padding: 30px;
+border-radius: 40px;
+width: 90%;
+max-width: 450px;
+box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+.modal h2 {
+margin: 0 0 10px 0;
+font-size: 1.4rem;
+color: #5A8CAF;
+text-align: center;
+}
+.modal.date-label {
+text-align: center;
+font-size: 0.9rem;
+color: #aaa;
+margin-bottom: 20px;
+}
+.mood-options {
+display: flex;
+flex-wrap: wrap;
+gap: 10px;
+justify-content: center;
+margin-bottom: 20px;
+}
+.mood-btn {
+border: 2px solid #E8F4FD;
+background: #F9FCFF;
+padding: 10px 15px;
+border-radius: 20px;
+cursor: pointer;
+color: #78A5C5;
+font-family: inherit;
+transition: 0.2s;
+}
+.mood-btn.active {
+background: var(--bg-blue);
+color: white;
+border-color: var(--bg-blue);
+transform: scale(1.05);
+}
+textarea {
+width: 100%;
+background: #F9FCFF;
+border: 2px solid #E8F4FD;
+border-radius: 20px;
+padding: 12px;
+margin-bottom: 15px;
+box-sizing: border-box;
+font-family: inherit;
+resize: none;
+outline: none;
+}
+.save-btn {
+width: 100%;
+background: var(--bg-blue);
+color: white;
+border: none;
+padding: 15px;
+border-radius: 25px;
+cursor: pointer;
+font-weight: bold;
+font-size: 1.1rem;
+box-shadow: 0 5px 15px rgba(176, 225, 255, 0.4);
+}
+.cancel-link {
+display: block;
+text-align: center;
+margin-top: 15px;
+color: #ccc;
+text-decoration: none;
+font-size: 0.9rem;
+}
+</style>
+</head>
+<body>
+<h1>2026 男朋友記錄表</h1>
+<div class="dashboard">
+<div class="stat-item">
+<span>開心次數</span>
+<b id="happyCount" class="happy-text happy-num">0</b>
+</div>
+<div class="stat-item">
+<span>生氣次數</span>
+<b id="angryCount" class="angry-text angry-num">0</b>
+</div>
+</div>
+<div class="calendar-grid" id="calendarRoot"></div>
+<div class="modal" id="entryModal">
+<div class="modal-content">
+<h2>今年發生了什麼事？</h2>
+<div class="date-label" id="modalDateTitle">2026-01-01</div>
+<p style="font-size:0.85rem; margin-bottom:10px; font-weight:bold;">選一個今天的心情：</p>
+<div class="mood-options" id="moodList">
+<button class="mood-btn" data-mood="興奮">🤩 興奮</button>
+<button class="mood-btn" data-mood="開心">😊 開心</button>
+<button class="mood-btn" data-mood="感動">🥺 感動</button>
+<button class="mood-btn" data-mood="委屈">😔 委屈</button>
+<button class="mood-btn" data-mood="傷心">😢 傷心</button>
+<button class="mood-btn" data-mood="生氣">💢 生氣</button>
+<button class="mood-btn" data-mood="哭">😭 哭</button>
+</div>
+<p style="font-size:0.85rem; margin-bottom:5px; font-weight:bold;">原因：</p>
+<textarea id="reasonInput" rows="3" placeholder="悄悄話寫在這裡..."></textarea>
+<p style="font-size:0.85rem; margin-bottom:5px; font-weight:bold;">解決方式或收穫：</p>
+<textarea id="solutionInput" rows="3" placeholder="後來我們是怎麼和好的呢？"></textarea>
+<button class="save-btn" onclick="saveRecord()">打勾儲存 ✨</button>
+<a href="javascript:void(0)" class="cancel-link" onclick="closeModal()">先關閉，我想看日曆</a>
+</div>
+</div>
+<script>
+const months = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+let currentSelectedDate = "";
+let selectedMood = "";
+function initCalendar() {
+const root = document.getElementById('calendarRoot');
+let startDay = 4; // 2026-01-01 is Thursday (4)
+for (let m = 0; m < 12; m++) {
+const monthBox = document.createElement('div');
+monthBox.className = 'month-box';
+let html = <div class="month-title">${months[m]}</div>;
+html += <div class="days-grid">;
+['日','一','二','三','四','五','六'].forEach(d => html += <div class="weekday">${d}</div>);
+for (let i = 0; i < startDay; i++) {
+html += <div></div>;
+}
+for (let d = 1; d <= monthDays[m]; d++) {
+const dateStr = 2026-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')};
+html += <div class="day-cell" id="cell-${dateStr}" onclick="openModal('${dateStr}')">${d}</div>;
+}
+html += </div>;
+monthBox.innerHTML = html;
+root.appendChild(monthBox);
+startDay = (startDay + monthDays[m]) % 7;
+}
+refreshUI();
+// 頁面加載後自動彈出「今天」的紀錄框
+autoOpenToday();
+}
+function autoOpenToday() {
+const now = new Date();
+// 建立 YYYY-MM-DD 格式，這裡鎖定 2026 年模擬
+const y = 2026;
+const m = String(now.getMonth() + 1).padStart(2, '0');
+const d = String(now.getDate()).padStart(2, '0');
+const todayStr = ${y}-${m}-${d};
+// 延遲一點點時間讓動畫更順
+setTimeout(() => openModal(todayStr), 300);
+}
+function openModal(date) {
+currentSelectedDate = date;
+selectedMood = "";
+document.getElementById('modalDateTitle').innerText = date;
+document.getElementById('reasonInput').value = "";
+document.getElementById('solutionInput').value = "";
+const data = JSON.parse(localStorage.getItem(date));
+if(data) {
+selectedMood = data.mood;
+document.getElementById('reasonInput').value = data.reason |
+| "";
+document.getElementById('solutionInput').value = data.solution |
+| "";
+}
+document.querySelectorAll('.mood-btn').forEach(btn => {
+btn.classList.toggle('active', btn.dataset.mood === selectedMood);
+});
+document.getElementById('entryModal').style.display = 'flex';
+}
+function closeModal() {
+document.getElementById('entryModal').style.display = 'none';
+}
+document.getElementById('moodList').addEventListener('click', (e) => {
+if(e.target.classList.contains('mood-btn')) {
+selectedMood = e.target.dataset.mood;
+document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+e.target.classList.add('active');
+}
+});
+function saveRecord() {
+if(!selectedMood) { alert("選個今天的心情嘛～"); return; }
+const record = {
+mood: selectedMood,
+reason: document.getElementById('reasonInput').value,
+solution: document.getElementById('solutionInput').value
+};
+localStorage.setItem(currentSelectedDate, JSON.stringify(record));
+closeModal();
+refreshUI();
+}
+function refreshUI() {
+let happy = 0;
+let angry = 0;
+const cells = document.querySelectorAll('.day-cell');
+cells.forEach(cell => {
+const date = cell.id.replace('cell-', '');
+const data = JSON.parse(localStorage.getItem(date));
+cell.classList.remove('mood-happy', 'mood-angry');
+if(data) {
+if(['興奮', '開心', '感動'].includes(data.mood)) {
+happy++;
+cell.classList.add('mood-happy');
+} else {
+angry++;
+cell.classList.add('mood-angry');
+}
+}
+});
+document.getElementById('happyCount').innerText = happy;
+document.getElementById('angryCount').innerText = angry;
+}
+window.onload = initCalendar;
+</script>
+</body>
+</html>
+ 
